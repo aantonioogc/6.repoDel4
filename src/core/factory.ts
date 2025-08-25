@@ -4,6 +4,7 @@ import { RpcClient } from './rpc-client';
 import { PolicyEngine } from '../rules/policy-engine';
 import { RuleConfig } from '../rules/types';
 import { InMemoryRateLimiterStore } from '../state/in-memory-store';
+import { RedisStores } from '../state/redis-store';
 import { RuleConfigStore } from '../rules/config-store';
 import { EventBus } from '../events/event-bus';
 
@@ -11,7 +12,8 @@ export async function createFirewallProvider(deps: { ruleConfig: RuleConfig; log
 	const upstreamUrl = process.env.UPSTREAM_RPC_URL || 'http://localhost:8545';
 	const rpc = new RpcClient({ upstreamUrl, timeoutMs: 15_000 });
 
-	const rateStore = new InMemoryRateLimiterStore();
+	// Prefer Redis stores when REDIS_URL present, else fallback to in-memory
+	const rateStore = process.env.REDIS_URL ? new RedisStores(process.env.REDIS_URL) : new InMemoryRateLimiterStore();
 	const ruleStore = new RuleConfigStore(deps.ruleConfig);
 	const policy = new PolicyEngine(ruleStore, rateStore);
 	const eventBus = new EventBus();

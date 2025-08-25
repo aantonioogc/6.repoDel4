@@ -14,8 +14,19 @@ class RedisStores {
         const multi = this.client.multi();
         multi.incr(key);
         multi.expire(key, ttlSeconds, 'NX');
-        const [count] = (await multi.exec());
-        return Number(count);
+        const [countReply] = (await multi.exec());
+        const count = Array.isArray(countReply) ? Number(countReply[1]) : Number(countReply);
+        return Number.isFinite(count) ? count : 0;
+    }
+    async addToSetAndGetSize(key, member, ttlMs) {
+        const ttlSeconds = Math.ceil(ttlMs / 1000);
+        const multi = this.client.multi();
+        multi.sadd(key, member);
+        multi.expire(key, ttlSeconds, 'NX');
+        multi.scard(key);
+        const replies = await multi.exec();
+        const scardReply = replies && replies[2] && (Array.isArray(replies[2]) ? replies[2][1] : replies[2]);
+        return Number(scardReply) || 0;
     }
     async get(key) {
         const v = await this.client.get(key);

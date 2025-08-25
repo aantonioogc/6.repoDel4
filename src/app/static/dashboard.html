@@ -491,9 +491,11 @@
                 const r = await fetch('/metrics');
                 const text = await r.text();
                 
-                const totalReq = (text.match(/nodeguard_requests_total\s+(\d+)/) || ['','-'])[1];
-                const blocked = (text.match(/nodeguard_requests_blocked_total\s+(\d+)/) || ['','-'])[1];
-                const txs = (text.match(/nodeguard_transactions_total\s+(\d+)/) || ['','-'])[1];
+                const totalReq = (text.match(/baf_jsonrpc_requests_total\{[^}]*\}\s+(\d+(?:\.\d+)?)/) || ['','-'])[1];
+                const blocked = (text.match(/baf_jsonrpc_blocked_total\{[^}]*\}\s+(\d+(?:\.\d+)?)/) || ['','-'])[1];
+                // Approximate forwarded as total - blocked if both are numbers
+                const forwarded = (Number(totalReq) - Number(blocked));
+                const txs = isNaN(forwarded) ? '-' : String(Math.max(0, forwarded));
                 
                 // Animación de números
                 animateValue('totalReq', totalReq);

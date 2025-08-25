@@ -25,6 +25,7 @@ export class InMemoryKeyValueStore<T = unknown> implements KeyValueStore<T> {
 
 export class InMemoryRateLimiterStore implements RateLimiterStore {
 	private counters = new Map<string, { count: number; windowEndsAt: number }>();
+	private sets = new Map<string, { members: Set<string>; expiresAt: number }>();
 
 	async incrementAndGetCount(key: string, windowMs: number): Promise<number> {
 		const now = Date.now();
@@ -36,5 +37,16 @@ export class InMemoryRateLimiterStore implements RateLimiterStore {
 		}
 		cur.count += 1;
 		return cur.count;
+	}
+
+	async addToSetAndGetSize(key: string, member: string, ttlMs: number): Promise<number> {
+		const now = Date.now();
+		let entry = this.sets.get(key);
+		if (!entry || entry.expiresAt <= now) {
+			entry = { members: new Set<string>(), expiresAt: now + ttlMs };
+			this.sets.set(key, entry);
+		}
+		entry.members.add(member);
+		return entry.members.size;
 	}
 }
