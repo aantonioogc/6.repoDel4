@@ -51,6 +51,17 @@ class HeuristicRules {
                 return { decision: 'block', reason: 'duplicate_nonce', rule: 'heuristics.nonceAnomaly', tags: ['heuristic', 'nonce'] };
             }
         }
+        // Sybil: limit number of unique addresses per IP window
+        if (ctx.from && this.cfg.heuristics.sybilUniqueAddressesWindowSeconds && this.cfg.heuristics.sybilMaxUniqueAddressesPerWindow) {
+            const ttlMs = this.cfg.heuristics.sybilUniqueAddressesWindowSeconds * 1000;
+            const key = `sybil:uniq:${ctx.clientIp}`;
+            if (typeof this.rateStore.addToSetAndGetSize === 'function') {
+                const size = await this.rateStore.addToSetAndGetSize(key, ctx.from.toLowerCase(), ttlMs);
+                if (size > this.cfg.heuristics.sybilMaxUniqueAddressesPerWindow) {
+                    return { decision: 'block', reason: 'sybil_unique_addresses', rule: 'heuristics.sybil', tags: ['heuristic', 'sybil'] };
+                }
+            }
+        }
         return null;
     }
 }

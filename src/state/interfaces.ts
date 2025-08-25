@@ -1,5 +1,10 @@
 export interface RateLimiterStore {
 	incrementAndGetCount(key: string, windowMs: number): Promise<number>;
+	/**
+	 * Add a member to a set with TTL and return the resulting set size.
+	 * Used for Sybil checks (unique identities per window).
+	 */
+	addToSetAndGetSize?(key: string, member: string, ttlMs: number): Promise<number>;
 }
 
 export interface KeyValueStore<T = unknown> {

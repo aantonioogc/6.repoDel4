@@ -27,6 +27,7 @@ exports.InMemoryKeyValueStore = InMemoryKeyValueStore;
 class InMemoryRateLimiterStore {
     constructor() {
         this.counters = new Map();
+        this.sets = new Map();
     }
     async incrementAndGetCount(key, windowMs) {
         const now = Date.now();
@@ -38,6 +39,16 @@ class InMemoryRateLimiterStore {
         }
         cur.count += 1;
         return cur.count;
+    }
+    async addToSetAndGetSize(key, member, ttlMs) {
+        const now = Date.now();
+        let entry = this.sets.get(key);
+        if (!entry || entry.expiresAt <= now) {
+            entry = { members: new Set(), expiresAt: now + ttlMs };
+            this.sets.set(key, entry);
+        }
+        entry.members.add(member);
+        return entry.members.size;
     }
 }
 exports.InMemoryRateLimiterStore = InMemoryRateLimiterStore;

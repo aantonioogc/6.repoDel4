@@ -47,6 +47,9 @@ export interface HeuristicRulesConfig {
 	fingerprintMaxRepeats?: number; // max identical payload repeats per window per ip
 	nonceAnomalyWindowSeconds?: number;
 	maxDuplicateNoncesPerWindow?: number;
+	// Sybil defense: cap unique addresses per IP within a sliding window
+	sybilUniqueAddressesWindowSeconds?: number;
+	sybilMaxUniqueAddressesPerWindow?: number;
 }
 
 export interface ReputationConfig {
